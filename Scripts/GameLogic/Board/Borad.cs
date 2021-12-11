@@ -48,7 +48,6 @@ public class Borad : MonoBehaviour
 
         _selectedOne.SetSprite(temp);
 
-
         Deselect();
     }
     private Vector2Int RandomItemSet()
@@ -70,33 +69,6 @@ public class Borad : MonoBehaviour
         }
     }
 
-    private void CheckCoincidence()
-    {
-        List<Tail> _tail = new List<Tail>();
-        int count = 0;
-        int y = 0;
-        for (int x = 0, x1 = 1; x < _board.GetLength(0) && x1 < _board.GetLength(0) - 1; x++, x1++)
-        {
-            if (_board[x, y].Render == _board[x1, y].Render && _board[x, y].Render == _board[x1 - 1, y].Render)
-            {
-                _tail.Add(_board[x, y]);
-                _tail.Add(_board[x1, y]);
-                count++;
-                if (count > 1)
-                {
-                    foreach (var item in _tail)
-                    {
-                        item.SetSprite(_default);
-                    }
-                }
-            }
-            else
-            {
-                _tail.Clear();
-                count = 0;
-            }
-        }
-    }
     private void CheckAllColumn()
     {
         int row = _board.GetLength(0);
@@ -110,10 +82,10 @@ public class Borad : MonoBehaviour
         int clomn = _board.GetLength(1);
         for (int i = 0; i < clomn; i++)
         {
-          CheckRow(i);          
+            CheckRow(i);
         }
     }
-    private void CheckRow(int column) 
+    private void CheckRow(int column)
     {
         List<Tail> tail = new List<Tail>();
         Tail temp = null;
@@ -123,10 +95,10 @@ public class Borad : MonoBehaviour
             {
                 temp = _board[i, column];
             }
-            if (_board[i,column].Render == temp.Render)
+            if (_board[i, column].Render == temp.Render)
             {
-                tail.Add(_board[i, column]);             
-                if (tail.Count >2)
+                tail.Add(_board[i, column]);
+                if (tail.Count > 2)
                 {
                     foreach (var item in tail)
                     {
@@ -141,7 +113,7 @@ public class Borad : MonoBehaviour
                 tail.Add(_board[i, column]);
             }
         }
-     
+
     }
     private void ChekcColumn(int column)
     {
@@ -151,7 +123,7 @@ public class Borad : MonoBehaviour
         {
             if (temp == null)
             {
-                temp = _board[ column,i];
+                temp = _board[column, i];
             }
             if (_board[column, i].Render == temp.Render)
             {
@@ -175,8 +147,12 @@ public class Borad : MonoBehaviour
     private void Update()
     {
         if ((Input.GetMouseButtonDown(0)))
-        {           
+        {
             SelectedTwoElement();
+        }
+        if (Input.GetKeyDown(KeyCode.R))//Falling tail handwork-time
+        {          
+            StartCoroutine(Falling(_height));
         }
     }
     private void Deselect()
@@ -187,6 +163,40 @@ public class Borad : MonoBehaviour
         _selectedTwo = null;
     }
 
+
+    private System.Collections.IEnumerator Falling(int count)
+    {
+        int time = 0;  
+        while (time <= count)
+        {
+            time++;
+            yield return new WaitForSeconds(0.3f);
+
+            if (time == count)
+            {
+                yield break;
+            }
+            FallingTail();
+        }
+    }
+    
+    private void FallingTail()
+    {
+
+        for (int y = 0; y < _board.GetLength(1)-1; y++)
+        {
+            for (int x = 0; x < _board.GetLength(0); x++)
+            {
+                Tail next = _board[x, y + 1];
+                if (_board[x, y].Render == _default)
+                {
+                    Tail current = next;
+                    _board[x, y].SetSprite(current.Render); // x:0 y:1 >> x:0 y:0
+                    next.SetSprite(_default);               //this row critieal my stupid
+                }
+            }
+        }
+    }
 }
 
 
