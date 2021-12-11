@@ -9,6 +9,8 @@ public class Borad : MonoBehaviour
 
     private Camera _camera;
 
+    private bool _canTouch;
+
     private Sprite[] _tail => _config.Tail;
     private Sprite _default => _config.DefaultSprite;
 
@@ -146,8 +148,9 @@ public class Borad : MonoBehaviour
     }
     private void Update()
     {
-        if ((Input.GetMouseButtonDown(0)))
+        if ((Input.GetMouseButtonDown(0))&& _canTouch == true)
         {
+            _canTouch = false;
             SelectedTwoElement();
         }
         if (Input.GetKeyDown(KeyCode.R))//Falling tail handwork-time
@@ -174,6 +177,7 @@ public class Borad : MonoBehaviour
 
             if (time == count)
             {
+                _canTouch = true;
                 yield break;
             }
             FallingTail();
