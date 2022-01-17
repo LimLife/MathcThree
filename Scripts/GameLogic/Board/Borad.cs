@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 public class Borad : MonoBehaviour
@@ -9,7 +9,7 @@ public class Borad : MonoBehaviour
 
     private Camera _camera;
 
-    private bool _canTouch;
+
 
     private Sprite[] _tail => _config.Tail;
     private Sprite _default => _config.DefaultSprite;
@@ -52,16 +52,20 @@ public class Borad : MonoBehaviour
 
         Deselect();
     }
-    private Vector2Int RandomItemSet()
+    private Vector2Int GetItemPostion()
     {
         Vector3 pos = _camera.ScreenToWorldPoint(Input.mousePosition);
         return new Vector2Int((int)Math.Round(pos.x), (int)Math.Round(pos.y));
     }
     private void SelectedTwoElement()
     {
-        var index = RandomItemSet();
+        var index = GetItemPostion();
         if (_selectedOne == null)
         {
+            if (index.x > _width || index.y > _height || index.x < 0 || index.y < 0)
+            {
+                return;
+            }
             _selectedOne = _board[index.x, index.y];
         }
         else
@@ -71,134 +75,79 @@ public class Borad : MonoBehaviour
         }
     }
 
-    private void CheckAllColumn()
-    {
-        int row = _board.GetLength(0);
-        for (int i = 0; i < row; i++)
-        {
-            ChekcColumn(i);
-        }
-    }
-    private void CheckAllRow()
-    {
-        int clomn = _board.GetLength(1);
-        for (int i = 0; i < clomn; i++)
-        {
-            CheckRow(i);
-        }
-    }
-    private void CheckRow(int column)
-    {
-        List<Tail> tail = new List<Tail>();
-        Tail temp = null;
-        for (int i = 0; i < _board.GetLength(0); i++)
-        {
-            if (temp == null)
-            {
-                temp = _board[i, column];
-            }
-            if (_board[i, column].Render == temp.Render)
-            {
-                tail.Add(_board[i, column]);
-                if (tail.Count > 2)
-                {
-                    foreach (var item in tail)
-                    {
-                        item.SetSprite(_default);
-                    }
-                }
-            }
-            else
-            {
-                tail.Clear();
-                temp = _board[i, column];
-                tail.Add(_board[i, column]);
-            }
-        }
 
-    }
-    private void ChekcColumn(int column)
+    private void AddNewTail()
     {
-        List<Tail> tail = new List<Tail>();
-        Tail temp = null;
-        for (int i = 0; i < _board.GetLength(1); i++)
+        for (int x = 0; x < _width; x++)
         {
-            if (temp == null)
+            if (_board[x, _height - 1].Render == _default)
             {
-                temp = _board[column, i];
-            }
-            if (_board[column, i].Render == temp.Render)
-            {
-                tail.Add(_board[column, i]);
-                if (tail.Count > 2)
-                {
-                    foreach (var item in tail)
-                    {
-                        item.SetSprite(_default);
-                    }
-                }
-            }
-            else
-            {
-                tail.Clear();
-                temp = _board[column, i];
-                tail.Add(_board[column, i]);
+                _board[x, _height - 1].SetSprite(_tail[UnityEngine.Random.Range(0, _tail.Length)]);
+
+                BoardFaced.Falling(_board, _default);
+                AddNewTail();
             }
         }
     }
-    private void Update()
+
+    private IEnumerator AddNewTails()
     {
-        if ((Input.GetMouseButtonDown(0))&& _canTouch == true)
-        {
-            _canTouch = false;
-            SelectedTwoElement();
+        int count = 0;
+        while (count < _height)
+        {           
+            count++;
+            AddNewTail();
+            yield return new WaitForSeconds(0.2f);
+
         }
-        if (Input.GetKeyDown(KeyCode.R))//Falling tail handwork-time
-        {          
-            StartCoroutine(Falling(_height));
-        }
+        yield break;
     }
-    private void Deselect()
+    private void Deselect() //2 лишних метода в нем
     {
         CheckAllRow();
         CheckAllColumn();
+        StartCoroutine(Falling(_height, 0.3f));
         _selectedOne = null;
         _selectedTwo = null;
     }
 
 
-    private System.Collections.IEnumerator Falling(int count)
+    private IEnumerator Falling(int count, float timeDilay)
     {
-        int time = 0;  
+        int time = 0;
         while (time <= count)
         {
             time++;
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(timeDilay);
 
             if (time == count)
             {
-                _canTouch = true;
+                AddNewTail();
                 yield break;
             }
-            FallingTail();
+            BoardFaced.Falling(_board, _default);
         }
     }
-    
-    private void FallingTail()
+    private void CheckAllRow()
     {
-
-        for (int y = 0; y < _board.GetLength(1)-1; y++)
+        for (int i = 0; i < _width; i++)
         {
-            for (int x = 0; x < _board.GetLength(0); x++)
-            {
-                Tail next = _board[x, y + 1];
-                if (_board[x, y].Render == _default)
-                {
-                    Tail current = next;
-                    _board[x, y].SetSprite(current.Render); // x:0 y:1 >> x:0 y:0
-                    next.SetSprite(_default);               //this row critieal my stupid
-                }
-            }
+            BoardFaced.CheckClumn(_board, i, _default);
+        }
+    }
+    private void CheckAllColumn()
+    {
+        for (int i = 0; i < _height; i++)
+        {
+            BoardFaced.CheckRow(_board, i, _default);
+        }
+    }
+    private void Update()
+    {
+        if ((Input.GetMouseButtonDown(0)))
+        {
+            SelectedTwoElement();
+
         }
     }
 }
